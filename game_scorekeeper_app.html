@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Scorekeeper</title>
+  <style>
+    :root{
+      --brand:#08529a;
+      --bg:#f7f7f7;
+      --card:#ffffff;
+      --border:#d7d7d7;
+      --muted:#6b7280;
+      --leader:#fff7cc;
+      --leaderBorder:#f5c542;
+    }
+
+    *{box-sizing:border-box;}
+
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      padding: 16px;
+      margin: 0;
+      background: var(--bg);
+      color:#111827;
+    }
+
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+    }
+
+    .sub {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      margin-bottom: 12px;
+    }
+
+    .controls .group{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    label{
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    input[type="number"], input[type="text"] {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+      background:#fff;
+    }
+
+    input[type="number"]{
+      width: 92px;
+      text-align:center;
+    }
+
+    input[type="text"]{
+      width: 140px;
+    }
+
+    button {
+      padding: 9px 12px;
+      font-size: 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background:#fff;
+      cursor: pointer;
+    }
+    button.primary{
+      background: var(--brand);
+      border-color: var(--brand);
+      color:#fff;
+    }
+    button.danger{
+      border-color:#ef4444;
+      color:#b91c1c;
+      background:#fff;
+    }
+    button:active{transform: translateY(1px);}
+
+    .hint{
+      font-size: 12px;
+      color: var(--muted);
+      margin-left:auto;
+    }
+
+    .tableWrap{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    /* Mobile-friendly: allow horizontal scroll */
+    .scroller{
+      overflow-x:auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: max(100%, 700px);
+      background: #fff;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      padding: 8px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    th:last-child, td:last-child{border-right:none;}
+
+    thead th {
+      background: var(--brand);
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    /* Sticky first column for easier mobile entry */
+    th.sticky, td.sticky{
+      position: sticky;
+      left: 0;
+      z-index: 3;
+      background: var(--brand);
+      color:#fff;
+      border-right: 1px solid rgba(255,255,255,0.2);
+    }
+    tbody td.sticky{
+      background:#f3f4f6;
+      color:#111827;
+      z-index: 1;
+    }
+
+    .name-input{
+      width: 140px;
+      max-width: 22vw;
+      text-align:center;
+    }
+
+    .score-input{
+      width: 92px;
+      max-width: 20vw;
+      text-align:center;
+    }
+
+    .totalCell{
+      font-weight: 700;
+      background: rgba(255,255,255,0.12);
+    }
+
+    /* Leader highlight */
+    .leader{
+      background: var(--leader) !important;
+      color:#111827 !important;
+      border-bottom-color: var(--leaderBorder) !important;
+    }
+
+    .leaderOutline{
+      box-shadow: inset 0 0 0 2px var(--leaderBorder);
+    }
+
+    .footerRow th{
+      background: #0b3f73;
+    }
+
+    @media (max-width: 520px){
+      body{padding:12px;}
+      .hint{flex-basis:100%; margin-left:0;}
+      input[type="text"]{width: 120px;}
+      input[type="number"], .score-input{width: 78px;}
+      button{width:100%;}
+      .controls .group{width:100%;}
+    }
+  </style>
+</head>
+<body>
+  <div id="jsWarning" style="max-width:1100px;margin:0 auto 12px;background:#fff;border:1px solid #f5c542;border-radius:12px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,0.04)">
+    <strong>Buttons not working?</strong>
+    <div style="margin-top:6px;color:#6b7280;font-size:13px;line-height:1.35">
+      Some phone/tablet file preview apps show HTML but <em>block JavaScript</em>, which disables Add Round / Add Player.
+      Open this file in a real web browser (Safari/Chrome/Edge) using Share / Open in Browser.
+    </div>
+  </div>
+  <noscript>
+    <div style="max-width:1100px;margin:0 auto 12px;background:#fff;border:1px solid #ef4444;border-radius:12px;padding:12px">
+      JavaScript is disabled or blocked by the viewer. Please open this file in Safari/Chrome (not a preview app).
+    </div>
+  </noscript>
+  <div class="wrap">
+    <h1>Game Scorekeeper</h1>
+    <p class="sub">Edit player names, enter each round’s score (negative scores supported), and totals update automatically. Your game auto-saves on every change so you won’t lose it if the browser closes.</p>
+
+    <div class="controls">
+      <div class="group">
+        <label for="playerCount">Players</label>
+        <input id="playerCount" type="number" min="1" max="20" step="1" value="10" />
+        <button id="applyPlayers" class="primary" type="button">Apply</button>
+        <button id="addPlayer" type="button">+ Player</button>
+        <button id="removePlayer" type="button">− Player</button>
+      </div>
+
+      <div class="group">
+        <button id="addRound" class="primary" type="button">Add Round</button>
+        <button id="newGame" class="danger" type="button">Reset / New Game</button>
+      </div>
+
+      <div class="hint" id="saveHint">Saved</div>
+    </div>
+
+    <div class="tableWrap">
+      <div class="scroller">
+        <table id="scoreTable" aria-label="Score table">
+          <thead>
+            <tr id="nameRow"></tr>
+            <tr id="totalRow" class="footerRow"></tr>
+          </thead>
+          <tbody id="scoreBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---- Persistence ----
+    const STORAGE_KEY = 'game_scorekeeper_v1';
+
+    // ---- DOM ----
+    const playerCountInput = document.getElementById('playerCount');
+    const applyPlayersBtn = document.getElementById('applyPlayers');
+    const addPlayerBtn = document.getElementById('addPlayer');
+    const removePlayerBtn = document.getElementById('removePlayer');
+    const addRoundBtn = document.getElementById('addRound');
+    const newGameBtn = document.getElementById('newGame');
+    const saveHint = document.getElementById('saveHint');
+
+    const nameRow = document.getElementById('nameRow');
+    const totalRow = document.getElementById('totalRow');
+    const body = document.getElementById('scoreBody');
+
+    // ---- State ----
+    let state = {
+      players: 10,
+      names: [],
+      rounds: [] // array of arrays: rounds[r][p] = score (number)
+    };
+
+    // ---- Utilities ----
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+    function flashSaved(text='Saved'){
+      saveHint.textContent = text;
+      saveHint.style.opacity = '1';
+      clearTimeout(flashSaved._t);
+      flashSaved._t = setTimeout(()=>{ saveHint.style.opacity = '0.85'; }, 700);
+    }
+
+    function saveState(){
+      try{
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        flashSaved('Saved');
+      }catch(e){
+        // If storage is blocked/full, still function without persistence
+        flashSaved('Could not save');
+      }
+    }
+
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return false;
+        const parsed = JSON.parse(raw);
+        if(!parsed || typeof parsed !== 'object') return false;
+        if(typeof parsed.players !== 'number') return false;
+        if(!Array.isArray(parsed.names) || !Array.isArray(parsed.rounds)) return false;
+        state = {
+          players: clamp(parsed.players, 1, 20),
+          names: parsed.names.slice(0, clamp(parsed.players,1,20)),
+          rounds: parsed.rounds.map(r => Array.isArray(r) ? r.slice(0, clamp(parsed.players,1,20)).map(x => Number(x) || 0) : [])
+        };
+        return true;
+      }catch(e){
+        return false;
+      }
+    }
+
+    // ---- Rendering ----
+    function clearTable(){
+      nameRow.innerHTML = '';
+      totalRow.innerHTML = '';
+      body.innerHTML = '';
+    }
+
+    function buildHeader(){
+      // Name row
+      const thRound = document.createElement('th');
+      thRound.textContent = 'Round';
+      thRound.className = 'sticky';
+      nameRow.appendChild(thRound);
+
+      // Total row
+      const thTotal = document.createElement('th');
+      thTotal.textContent = 'Total';
+      thTotal.className = 'sticky';
+      totalRow.appendChild(thTotal);
+
+      // Players
+      for(let i=0;i<state.players;i++){
+        const th = document.createElement('th');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'name-input';
+        input.placeholder = `Player ${i+1}`;
+        input.value = state.names[i] ?? '';
+        input.addEventListener('input', () => {
+          state.names[i] = input.value;
+          saveState();
+        });
+        th.appendChild(input);
+        nameRow.appendChild(th);
+
+        const totalTh = document.createElement('th');
+        totalTh.textContent = '0';
+        totalTh.className = 'totalCell';
+        totalRow.appendChild(totalTh);
+      }
+    }
+
+    function buildRounds(){
+      for(let r=0;r<state.rounds.length;r++){
+        body.appendChild(buildRoundRow(r));
+      }
+    }
+
+    function buildRoundRow(roundIndex){
+      const row = document.createElement('tr');
+
+      const roundCell = document.createElement('td');
+      roundCell.textContent = String(roundIndex + 1);
+      roundCell.className = 'sticky';
+      row.appendChild(roundCell);
+
+      for(let p=0;p<state.players;p++){
+        const td = document.createElement('td');
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.step = '1';
+        input.className = 'score-input';
+        // Negative score support happens naturally with type=number
+        const val = (state.rounds[roundIndex] && typeof state.rounds[roundIndex][p] !== 'undefined')
+          ? Number(state.rounds[roundIndex][p])
+          : 0;
+        input.value = String(Number.isFinite(val) ? val : 0);
+
+        input.addEventListener('input', () => {
+          const num = Number(input.value);
+          if(!state.rounds[roundIndex]) state.rounds[roundIndex] = Array(state.players).fill(0);
+          state.rounds[roundIndex][p] = Number.isFinite(num) ? num : 0;
+          updateTotalsAndLeader();
+          saveState();
+        });
+
+        td.appendChild(input);
+        row.appendChild(td);
+      }
+
+      return row;
+    }
+
+    function render(){
+      clearTable();
+      playerCountInput.value = String(state.players);
+
+      // Ensure names and rounds arrays are the right size
+      state.names = Array.from({length: state.players}, (_,i) => state.names[i] ?? '');
+      state.rounds = state.rounds.map(r => Array.from({length: state.players}, (_,i)=> Number(r?.[i]) || 0));
+
+      buildHeader();
+      buildRounds();
+      updateTotalsAndLeader();
+    }
+
+    function getTotals(){
+      const totals = Array(state.players).fill(0);
+      for(let r=0;r<state.rounds.length;r++){
+        for(let p=0;p<state.players;p++){
+          totals[p] += Number(state.rounds[r][p]) || 0;
+        }
+      }
+      return totals;
+    }
+
+    function updateTotalsAndLeader(){
+      const totals = getTotals();
+
+      // Update total header cells
+      for(let p=0;p<state.players;p++){
+        totalRow.children[p+1].textContent = String(totals[p]);
+      }
+
+      // Leader highlight (supports ties)
+      const max = Math.max(...totals);
+      for(let p=0;p<state.players;p++){
+        const isLeader = totals[p] === max;
+
+        // Header total cells
+        const totalCell = totalRow.children[p+1];
+        totalCell.classList.toggle('leader', isLeader);
+        totalCell.classList.toggle('leaderOutline', isLeader);
+
+        // Name header cells
+        const nameCell = nameRow.children[p+1];
+        nameCell.classList.toggle('leader', isLeader);
+
+        // Body column cells
+        for(let r=0;r<body.children.length;r++){
+          const row = body.children[r];
+          const cell = row.children[p+1];
+          cell.classList.toggle('leader', isLeader);
+        }
+      }
+    }
+
+    // ---- Actions ----
+    function setPlayers(newCount){
+      const count = clamp(Number(newCount) || 1, 1, 20);
+      if(count === state.players) return;
+
+      // Resize names
+      const oldPlayers = state.players;
+      state.players = count;
+      state.names = Array.from({length: count}, (_,i) => state.names[i] ?? '');
+
+      // Resize rounds
+      state.rounds = state.rounds.map(r => {
+        const row = Array.from({length: count}, (_,i)=> Number(r?.[i]) || 0);
+        return row;
+      });
+
+      // If we increased players, keep existing round structure (new player scores default 0)
+      // If we decreased, truncate.
+
+      render();
+      saveState();
+      flashSaved(oldPlayers < count ? 'Player added' : 'Players updated');
+    }
+
+    function addRound(){
+      state.rounds.push(Array(state.players).fill(0));
+      body.appendChild(buildRoundRow(state.rounds.length - 1));
+      updateTotalsAndLeader();
+      saveState();
+      flashSaved('Round added');
+    }
+
+    function resetNewGame(){
+      const ok = confirm('Start a new game? This will clear rounds and totals (names can be kept).');
+      if(!ok) return;
+
+      // Keep names; clear rounds
+      state.rounds = [];
+      render();
+      saveState();
+      flashSaved('New game');
+    }
+
+    // ---- Wire up controls ----
+    applyPlayersBtn.addEventListener('click', () => setPlayers(playerCountInput.value));
+
+    addPlayerBtn.addEventListener('click', () => {
+      setPlayers(state.players + 1);
+    });
+
+    removePlayerBtn.addEventListener('click', () => {
+      setPlayers(state.players - 1);
+    });
+
+    addRoundBtn.addEventListener('click', addRound);
+    newGameBtn.addEventListener('click', resetNewGame);
+
+    // Apply on Enter in player count field
+    playerCountInput.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter') setPlayers(playerCountInput.value);
+    });
+
+    // ---- Init ----
+    // Hide JS warning (if you can see it, JavaScript is running)
+    const warn = document.getElementById('jsWarning');
+    if (warn) warn.style.display = 'none';
+    const restored = loadState();
+    if(!restored){
+      // Default state
+      state.players = 10;
+      state.names = Array.from({length: state.players}, (_,i)=>'');
+      state.rounds = [Array(state.players).fill(0)];
+      saveState();
+    }
+
+    // Ensure at least one round exists for convenience
+    if(state.rounds.length === 0){
+      state.rounds = [Array(state.players).fill(0)];
+    }
+
+    render();
+    flashSaved(restored ? 'Restored last game' : 'Saved');
+  </script>
+</body>
+</html>

@@ -164,6 +164,12 @@
       z-index: 1;
     }
 
+    tfoot th.sticky{
+      background: #0b3f73;
+      color:#fff;
+      z-index: 2;
+    }
+
     .name-input{
       width: 140px;
       max-width: 22vw;
@@ -248,6 +254,10 @@
             <tr id="totalRow" class="footerRow"></tr>
           </thead>
           <tbody id="scoreBody"></tbody>
+          <tfoot>
+            <tr id="bottomNameRow"></tr>
+            <tr id="bottomTotalRow" class="footerRow"></tr>
+          </tfoot>
         </table>
       </div>
     </div>
@@ -269,6 +279,8 @@
     const nameRow = document.getElementById('nameRow');
     const totalRow = document.getElementById('totalRow');
     const body = document.getElementById('scoreBody');
+    const bottomNameRow = document.getElementById('bottomNameRow');
+    const bottomTotalRow = document.getElementById('bottomTotalRow');
 
     // ---- State ----
     let state = {
@@ -320,6 +332,8 @@
     function clearTable(){
       nameRow.innerHTML = '';
       totalRow.innerHTML = '';
+      bottomNameRow.innerHTML = '';
+      bottomTotalRow.innerHTML = '';
       body.innerHTML = '';
     }
 
@@ -330,11 +344,23 @@
       thRound.className = 'sticky';
       nameRow.appendChild(thRound);
 
-      // Total row
+      // Top total row
       const thTotal = document.createElement('th');
       thTotal.textContent = 'Total';
       thTotal.className = 'sticky';
       totalRow.appendChild(thTotal);
+
+      // Bottom name row
+      const bottomRound = document.createElement('th');
+      bottomRound.textContent = 'Player';
+      bottomRound.className = 'sticky';
+      bottomNameRow.appendChild(bottomRound);
+
+      // Bottom total row
+      const bottomTotalLabel = document.createElement('th');
+      bottomTotalLabel.textContent = 'Total';
+      bottomTotalLabel.className = 'sticky';
+      bottomTotalRow.appendChild(bottomTotalLabel);
 
       // Players
       for(let i=0;i<state.players;i++){
@@ -346,6 +372,8 @@
         input.value = state.names[i] ?? '';
         input.addEventListener('input', () => {
           state.names[i] = input.value;
+          const label = input.value || `Player ${i+1}`;
+          bottomNameRow.children[i+1].textContent = label;
           saveState();
         });
         th.appendChild(input);
@@ -355,6 +383,16 @@
         totalTh.textContent = '0';
         totalTh.className = 'totalCell';
         totalRow.appendChild(totalTh);
+
+        const bottomNameTh = document.createElement('th');
+        bottomNameTh.textContent = input.value || `Player ${i+1}`;
+        bottomNameTh.className = 'totalCell';
+        bottomNameRow.appendChild(bottomNameTh);
+
+        const bottomTotalTh = document.createElement('th');
+        bottomTotalTh.textContent = '0';
+        bottomTotalTh.className = 'totalCell';
+        bottomTotalRow.appendChild(bottomTotalTh);
       }
     }
 
@@ -428,6 +466,7 @@
       // Update total header cells
       for(let p=0;p<state.players;p++){
         totalRow.children[p+1].textContent = String(totals[p]);
+        bottomTotalRow.children[p+1].textContent = String(totals[p]);
       }
 
       // Leader highlight (supports ties)
@@ -440,9 +479,16 @@
         totalCell.classList.toggle('leader', isLeader);
         totalCell.classList.toggle('leaderOutline', isLeader);
 
+        const bottomTotalCell = bottomTotalRow.children[p+1];
+        bottomTotalCell.classList.toggle('leader', isLeader);
+        bottomTotalCell.classList.toggle('leaderOutline', isLeader);
+
         // Name header cells
         const nameCell = nameRow.children[p+1];
         nameCell.classList.toggle('leader', isLeader);
+
+        const bottomNameCell = bottomNameRow.children[p+1];
+        bottomNameCell.classList.toggle('leader', isLeader);
 
         // Body column cells
         for(let r=0;r<body.children.length;r++){
